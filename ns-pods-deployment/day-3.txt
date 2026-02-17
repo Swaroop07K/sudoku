@@ -1,0 +1,109 @@
+kind: Job
+apiVersion: batch/v1
+
+metadata:
+  name: first-job-nginx
+  namespace: nginx
+
+spec:
+  completions: 1
+  parallelism: 1
+
+  template:
+    metadata:
+      name: demo-job
+      labels:
+        app: batch-job
+
+    spec:
+      containers:
+      - name: batch-job
+        image: busybox:latest
+        command: ["sh", "-c", "echo Day-3 of K8s. && sleep 10"]
+      restartPolicy: Never
+
+
+kind: CronJob
+apiVersion: batch/v1
+
+metadata:
+  name: first-cronjob
+  namespace: nginx
+
+spec:
+  schedule: "*/2 * * * *"
+  jobTemplate:
+
+    spec:
+      template:
+        metadata:
+          labels:
+            app: cron-job
+
+        spec:
+          containers:
+          - name: cron-job
+            image: busybox:latest
+            command:
+            - sh
+            - -c
+            - >
+              echo "Backup initiating" &&
+              mkdir -p /backups &&
+              mkdir -p /d-data &&
+              cp -r /d-data /backups &&
+              echo "Backup completed." &&
+              echo "Next backup after 2 minutes."
+
+            volumeMounts:
+            - name: data-volume
+              mountPath: /d-data
+            - name: backup-volume
+              mountPath: /backups
+          restartPolicy: OnFailure
+
+          volumes:
+          - name: data-volume
+            hostPath:
+              path: /d-data
+              type: DirectoryOrCreate
+          - name: backup-volume
+            hostPath:
+              path: /backups
+              type: DirectoryOrCreate
+
+
+kind: PersistentVolume
+apiVersion: v1
+
+metadata:
+  name: local-pv
+  labels:
+    app: local-storage
+
+spec:
+  capacity:
+    storage: 2.5Gi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  hostPath:
+    path: /mnt/data
+
+
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+
+metadata:
+  name: local-pvc
+  namespace: nginx
+
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: local-storage

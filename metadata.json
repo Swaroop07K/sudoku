@@ -1,0 +1,5 @@
+{
+  "name": "Minimalist Sudoku AI",
+  "description": "A clean, functional Sudoku game featuring AI-powered hints and puzzle analysis using Gemini.",
+  "requestFramePermissions": []
+}
